@@ -21,55 +21,14 @@ void setup()
 
 void loop(void)
 {
-  string receivedCommand = listenForCommand();
+  string receivedCommand = radioListen();
   commandActions(receivedCommand);
-  // Read all button presses
-  // Do any actions
-
-  
-  buttons = tm.readButtons();
-  for(int button = 1; button < 9; button++){
-     buttons = tm.readButtons();
-     if(isButtonBeingPressed(button) && button == 5){
-        const char text[] = "pit request!";
-        radio.write(text, sizeof(text));
-        delay(100);
-        LEDon(0);
-        delay(100);
-        pushText("request", 2000);
-     }
-   }
+  readButtons();
   delay(500); // End of loop
 }
 
-void pushText(String displayText, int delayAmount) {
-  tm.displayText(" ");
-  tm.displayText(displayText);
-  delay(delayAmount);
-  tm.displayText(" ");
-  delay(100);
-}
 
-void blinkLED(int LEDNum) {
-  const uint8_t LED = LEDNum;
-  const uint8_t ON = 1;
-  const uint8_t OFF = 0;
-  tm.setLED(LED,ON);
-  delay(200);
-  tm.setLED(LED,OFF);
-}
-
-void LEDon(int LEDNum) {
-  const uint8_t LED = LEDNum;
-  const uint8_t ON = 1;
-  tm.setLED(LED,ON);
-}
-void LEDoff(int LEDNum) {
-  const uint8_t LED = LEDNum;
-  const uint8_t OFF = 0;
-  tm.setLED(LED,OFF);
-}
-
+// Setup Functions
 void bootUpLEDs(){
   tm.reset(); 
   int LED = 0;
@@ -90,12 +49,12 @@ int teamSelect() {
        buttons = tm.readButtons();
        if(isButtonBeingPressed(button) && button == 1){
         thisTeam = 1;
-        pushText("alpha", 2000);
+        sendToScreen("alpha", 2, false);
         break;
        }
        if(isButtonBeingPressed(button) && button == 8){
         thisTeam = 2;
-        pushText("bravo", 2000);
+        sendToScreen("bravo", 2, false);
         break;
        }
     }
@@ -124,10 +83,25 @@ void setupRadio(int thisTeam){
   radio.enableDynamicPayloads();
   radio.powerUp();
   delay(500);
-  pushText("READY...", 1500);
+  sendToScreen("READY...", 2, false);
 }
 
-string listenForCommand(){
+// Loop functions
+void commandActions(string receivedCommand){
+  tm.displayText(" "); // reset display only
+  if(receivedCommand == "BOX"){
+    sendToScreen("80X  8OX", 15, true)
+  }
+  if(receivedCommand == "PUSH"){
+    sendToScreen("  PUSH  ", 5, false)
+  }
+  if(receivedCommand == "BLUE"){
+    sendToScreen("  8LUE  ", 5, false)
+  }
+}
+
+// Radio functions
+string radioListen(){
   radio.startListening();
   char receivedMessage[32] = {0};
   if (radio.available()){
@@ -135,45 +109,31 @@ string listenForCommand(){
     radio.read(receivedMessage, sizeof(receivedMessage));
     radio.stopListening();
     String stringMessage(receivedMessage);
-    send(receivedMessage); // Send message back to confirm it arrived
+    radioSend(receivedMessage); // Send message back to confirm it arrived
     return receivedMessage;
   }
 }
-
-void commandActions(string receivedCommand){
-  tm.displayText(" "); // reset display only
-  if(receivedCommand == "BOX"){
-    tm.displayText("80X  8OX");
-    waitForAccept();
-  }
-  if(receivedCommand == "PUSH"){
-    tm.displayText("  PUSH  ");
-    //waitForAccept();
-  }
-}
-
-void waitForAccept(){
-  bool waitForAccept = true;
-  while (waitForAccept) {
-    for(int button = 1; button < 9; button++){
-        buttons = tm.readButtons();
-        if(isButtonBeingPressed(button) && button == 5){
-          waitForAccept = false;
-          const char text[] = "accepted!";
-          radio.write(text, sizeof(text));
-          pushText("ACCEPtED", 500);
-        }
-      }
-  }
-}
-
-void send(string receivedMessage){
+void radioSend(string receivedMessage){
   const char text[] = receivedMessage;
   radio.write(text, sizeof(text));
   blinkLED(1); // blink led 1 to show something was sent
 }
 
-// This function will return true if a particular button n is currently being pressed.
+// Display functions
+void sendToScreen(String displayText, int delayAmount, boolean requestAcceptance) {
+  tm.displayText(" "); // clear the display
+  tm.displayText(displayText); // display the message
+  delayAmount = delayAmount * 1000; // calculate the actual delay in ms
+  if (requestAcceptance == false) {
+    delay(delayAmount);
+  } else {
+    waitForAccept(delayAmount);  
+  }
+  tm.displayText(" "); // clear the display again
+  delay(100);
+}
+
+// Button functions
 boolean isButtonBeingPressed(int n){
  // Button 1 status shown by bit0 of the byte buttons returned by module.getButtons()
  // Button 2 status shown by bit1 or the byte buttons ...
@@ -196,4 +156,60 @@ boolean isButtonBeingPressed(int n){
    return true;
  else 
    return false;
+}
+readButtons(){
+  buttons = tm.readButtons();
+  for(int button = 1; button < 9; button++){
+     buttons = tm.readButtons();
+     if(isButtonBeingPressed(button) && button == 5){
+        const char text[] = "pit request!";
+        radio.write(text, sizeof(text));
+        delay(100);
+        LEDon(0);
+        delay(100);
+        sendToScreen("request", 2, false);
+     }
+   }
+}
+void waitForAccept(int waitAmount){
+  bool waitForAccept = true;
+  unsigned long startTime = millis();
+  while (waitForAccept) {
+    for(int button = 1; button < 9; button++){
+      buttons = tm.readButtons();
+      if(isButtonBeingPressed(button) && button == 5){
+        waitForAccept = false;
+        const char text[] = "Accepted!";
+        radio.write(text, sizeof(text));
+        sendToScreen("ACCEPtED", 1, false);
+      }
+      if (currentTime - startTime >= waitAmount) {
+        const char text[] = "No Response";
+        radio.write(text, sizeof(text));
+        break;
+      }
+    }
+    unsigned long currentTime = millis();
+  }
+}
+
+
+// LED Functions
+void blinkLED(int LEDNum) {
+  const uint8_t LED = LEDNum;
+  const uint8_t ON = 1;
+  const uint8_t OFF = 0;
+  tm.setLED(LED,ON);
+  delay(200);
+  tm.setLED(LED,OFF);
+}
+void LEDon(int LEDNum) {
+  const uint8_t LED = LEDNum;
+  const uint8_t ON = 1;
+  tm.setLED(LED,ON);
+}
+void LEDoff(int LEDNum) {
+  const uint8_t LED = LEDNum;
+  const uint8_t OFF = 0;
+  tm.setLED(LED,OFF);
 }
