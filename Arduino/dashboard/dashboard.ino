@@ -1,22 +1,77 @@
-// Transmit
+// Include and setup Transceiver Module
 #include <SPI.h>
-// #include <nRF24L01.h>
+// #include <nRF24L01.h> // Not needed anymore? worth removing this line
 #include <RF24.h>
-//create an RF24 object
 RF24 radio(9, 8);  // CE, CSN
 
-// Display
+// Include and setup Display Module
 #include <TM1638lite.h>
 TM1638lite tm(2, 3, 4);
 byte buttons;
 
 //address through which two modules communicate.
-const byte addresses[][6] = {"00001", "00002"};
+// const byte addresses[][6] = {"00001", "00002"}; // More unused/old code!
 
 void setup()
 {
-  tm.reset();
+  bootUpLEDs();
+  int thisTeam = teamSelect();
+  setupRadio(thisTeam);
+}
 
+void loop(void)
+{
+  string receivedCommand = listenForCommand();
+  commandActions(receivedCommand);
+  // Read all button presses
+  // Do any actions
+
+  
+  buttons = tm.readButtons();
+  for(int button = 1; button < 9; button++){
+     buttons = tm.readButtons();
+     if(isButtonBeingPressed(button) && button == 5){
+        const char text[] = "pit request!";
+        radio.write(text, sizeof(text));
+        delay(100);
+        LEDon(0);
+        delay(100);
+        pushText("request", 2000);
+     }
+   }
+  delay(500); // End of loop
+}
+
+void pushText(String displayText, int delayAmount) {
+  tm.displayText(" ");
+  tm.displayText(displayText);
+  delay(delayAmount);
+  tm.displayText(" ");
+  delay(100);
+}
+
+void blinkLED(int LEDNum) {
+  const uint8_t LED = LEDNum;
+  const uint8_t ON = 1;
+  const uint8_t OFF = 0;
+  tm.setLED(LED,ON);
+  delay(200);
+  tm.setLED(LED,OFF);
+}
+
+void LEDon(int LEDNum) {
+  const uint8_t LED = LEDNum;
+  const uint8_t ON = 1;
+  tm.setLED(LED,ON);
+}
+void LEDoff(int LEDNum) {
+  const uint8_t LED = LEDNum;
+  const uint8_t OFF = 0;
+  tm.setLED(LED,OFF);
+}
+
+void bootUpLEDs(){
+  tm.reset(); 
   int LED = 0;
   while(LED <= 7){
     LEDon(LED);
@@ -24,9 +79,10 @@ void setup()
     LED++;
   }
   tm.reset();
+}
 
+int teamSelect() {
   int thisTeam = 0;
-
   while(thisTeam == 0){
     tm.displayText(" A or 8 ");
     buttons = tm.readButtons();
@@ -44,10 +100,12 @@ void setup()
        }
     }
   }
-  
+  return thisTeam;
+}
+
+void setupRadio(int thisTeam){
   while(!Serial);
   Serial.begin(9600);
-
   radio.begin();
   radio.setPALevel(RF24_PA_MAX);
 
@@ -62,122 +120,57 @@ void setup()
     const uint64_t pipe = 0xE8E8F0F0E1LL;
     radio.openReadingPipe(1, pipe);
   }
-  
+
   radio.enableDynamicPayloads();
   radio.powerUp();
-  
-  //set the address
-  //radio.openWritingPipe(addresses[1]);
-  //radio.openReadingPipe(1, addresses[0]);
-  
-  //Set module as transmitter
-  //radio.stopListening();
   delay(500);
   pushText("READY...", 1500);
-
-
 }
 
-
-
-void loop(void)
-{
-
-
-  
-
-  
-  buttons = tm.readButtons();
-  for(int button = 1; button < 9; button++){
-     buttons = tm.readButtons();
-     if(isButtonBeingPressed(button) && button == 5){
-        const char text[] = "pit request!";
-        radio.write(text, sizeof(text));
-        delay(100);
-        LEDon(0);
-        delay(100);
-        pushText("request", 2000);
-     }
-   }
-
-
-
-  
+string listenForCommand(){
   radio.startListening();
   char receivedMessage[32] = {0};
   if (radio.available()){
+    blinkLED(0); // blink led 0 to show something was recieved
     radio.read(receivedMessage, sizeof(receivedMessage));
     radio.stopListening();
-    blinkLED(0);
     String stringMessage(receivedMessage);
+    send(receivedMessage); // Send message back to confirm it arrived
+    return receivedMessage;
+  }
+}
 
-    if(stringMessage == "BOX"){
-      tm.reset();
-      tm.displayText("80X  8OX");
-      bool waitForAccept = true;
-      while (waitForAccept) {
-        for(int button = 1; button < 9; button++){
-           buttons = tm.readButtons();
-           if(isButtonBeingPressed(button) && button == 5){
-              waitForAccept = false;
-              const char text[] = "box accepted!";
-              radio.write(text, sizeof(text));
-              pushText("ACCEPtED", 500);
-           }
-         }
+void commandActions(string receivedCommand){
+  tm.displayText(" "); // reset display only
+  if(receivedCommand == "BOX"){
+    tm.displayText("80X  8OX");
+    waitForAccept();
+  }
+  if(receivedCommand == "PUSH"){
+    tm.displayText("  PUSH  ");
+    //waitForAccept();
+  }
+}
+
+void waitForAccept(){
+  bool waitForAccept = true;
+  while (waitForAccept) {
+    for(int button = 1; button < 9; button++){
+        buttons = tm.readButtons();
+        if(isButtonBeingPressed(button) && button == 5){
+          waitForAccept = false;
+          const char text[] = "accepted!";
+          radio.write(text, sizeof(text));
+          pushText("ACCEPtED", 500);
+        }
       }
-    }
-
-    
-    if(stringMessage == "GETSTRING"){
-      pushText("received", 1000);
-      const char text[] = "hello world!";
-      radio.write(text, sizeof(text));
-      pushText("reply", 1000);
-    }
   }
-
-  delay(500);
-  
 }
 
-void pushText(String displayText, int delayAmount) {
-  tm.displayText(" ");
-  tm.displayText(displayText);
-  delay(delayAmount);
-  tm.displayText(" ");
-  delay(500);
-}
-
-void blinkLED(int LEDNum) {
-  tm.reset();
-  const uint8_t LED = LEDNum;
-  const uint8_t ON = 1;
-  const uint8_t OFF = 0;
-  tm.setLED(LED,ON);
-  delay(500);
-  tm.setLED(LED,OFF);
-  delay(500);
-  tm.reset();
-}
-
-void LEDon(int LEDNum) {
-  const uint8_t LED = LEDNum;
-  const uint8_t ON = 1;
-  tm.setLED(LED,ON);
-}
-void LEDoff(int LEDNum) {
-  const uint8_t LED = LEDNum;
-  const uint8_t OFF = 0;
-  tm.setLED(LED,OFF);
-}
-
-void doLEDs(uint8_t value) {
-  for (uint8_t position = 0; position < 8; position++) {
-    tm.setLED(position, value & 1);
-    value = value >> 1;
-  }
-  
+void send(string receivedMessage){
+  const char text[] = receivedMessage;
+  radio.write(text, sizeof(text));
+  blinkLED(1); // blink led 1 to show something was sent
 }
 
 // This function will return true if a particular button n is currently being pressed.
