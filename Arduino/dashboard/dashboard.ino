@@ -9,11 +9,13 @@ RF24 radio(9, 8);  // CE, CSN
 TM1638lite tm(2, 3, 4);
 byte buttons;
 
+
 //address through which two modules communicate.
 // const byte addresses[][6] = {"00001", "00002"}; // More unused/old code!
 
 void setup()
 {
+  Serial.begin(9600);
   bootUpLEDs();
   int thisTeam = teamSelect();
   setupRadio(thisTeam);
@@ -87,17 +89,39 @@ void setupRadio(int thisTeam){
 }
 
 // Loop functions
-void commandActions(string receivedCommand){
+void commandActions(string receivedString){
   tm.displayText(" "); // reset display only
-  if(receivedCommand == "BOX"){
-    sendToScreen("80X  8OX", 15, true)
+  String receivedCommand = parseMessage(receivedString,';',0);
+  String receivedValue = parseMessage(receivedString,';',1);
+  if(receivedCommand == "box"){
+    sendToScreen("80X  8OX", 15, true);
   }
-  if(receivedCommand == "PUSH"){
-    sendToScreen("  PUSH  ", 5, false)
+  if(receivedCommand == "push"){
+    sendToScreen("  PUSH  ", 5, false);
   }
-  if(receivedCommand == "BLUE"){
-    sendToScreen("  8LUE  ", 5, false)
+  if(receivedCommand == "blue"){
+    sendToScreen("  8LUE  ", 5, false);
   }
+  if(receivedCommand == "stint"){
+    // sendToScreen("  8LUE  ", 5, false)
+  }
+}
+
+String parseMessage(String data, char separator, int index)
+{
+  int found = 0;
+  int strIndex[] = {0, -1};
+  int maxIndex = data.length()-1;
+
+  for(int i=0; i<=maxIndex && found<=index; i++){
+    if(data.charAt(i)==separator || i==maxIndex){
+        found++;
+        strIndex[0] = strIndex[1]+1;
+        strIndex[1] = (i == maxIndex) ? i+1 : i;
+    }
+  }
+
+  return found>index ? data.substring(strIndex[0], strIndex[1]) : "";
 }
 
 // Radio functions
@@ -123,6 +147,7 @@ void radioSend(string receivedMessage){
 void sendToScreen(String displayText, int delayAmount, boolean requestAcceptance) {
   tm.displayText(" "); // clear the display
   tm.displayText(displayText); // display the message
+  Serial.println(displayText); // Debug push to monitor
   delayAmount = delayAmount * 1000; // calculate the actual delay in ms
   if (requestAcceptance == false) {
     delay(delayAmount);
