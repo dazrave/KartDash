@@ -1,0 +1,23 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "C:\\Users\\Darren\\AppData\\Local\\Arduino15\\packages\\esp8266\\tools\\**",
+                "C:\\Users\\Darren\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\2.6.2\\**",
+                "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\libraries\\SPI\\src",
+                "C:\\Users\\Darren\\Documents\\Arduino\\libraries\\TM1638lite\\src",
+                "C:\\Users\\Darren\\Documents\\Arduino\\libraries\\RF24-master",
+                "C:\\Program Files (x86)\\Arduino\\tools\\**",
+                "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\**",
+                "D:\\Dropbox\\Projects\\KartDash\\Arduino\\libraries"
+            ],
+            "forcedInclude": [
+                "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\cores\\arduino\\Arduino.h",
+                "D:\\Dropbox\\Projects\\KartDash\\Arduino\\libraries"
+            ],
+            "intelliSenseMode": "msvc-x64"
+        }
+    ],
+    "version": 4
+}
