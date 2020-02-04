@@ -2,7 +2,7 @@
 void sendToScreen(String displayText, int delayAmount, boolean requestAcceptance) {
   tm.displayText(" "); // clear the display
   tm.displayText(displayText); // display the message
-  Serial.println(displayText); // Debug push to monitor
+  Serial.println("Display: "+displayText); // Debug push to monitor
   delayAmount = delayAmount * 1000; // calculate the actual delay in ms
   if (requestAcceptance == false) {
     delay(delayAmount);

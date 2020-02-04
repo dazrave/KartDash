@@ -1,6 +1,6 @@
 {
-    "sketch": "arduino/paddock/paddock.ino",
     "board": "arduino:avr:mega",
     "port": "COM6",
+    "sketch": "sendOnly.ino",
     "configuration": "cpu=atmega2560"
 }

@@ -4,7 +4,7 @@ void blinkLED(int LEDNum) {
   const uint8_t ON = 1;
   const uint8_t OFF = 0;
   tm.setLED(LED,ON);
-  Serial.println("LED Blink");
+  //Serial.println("LED Blink");
   delay(200);
   tm.setLED(LED,OFF);
 }

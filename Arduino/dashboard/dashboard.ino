@@ -1,10 +1,13 @@
-// Include and setup Transceiver Module
+//Include Libraries
 #include <SPI.h>
-#include <nRF24L01.h> // Not needed anymore? worth removing this line
+#include <nRF24L01.h>
 #include <RF24.h>
+
+//create an RF24 object
 RF24 radio(9, 8);  // CE, CSN
 
-// #include <EEPROM.h> // Save to memory module
+//address through which two modules communicate.
+const byte address[6] = "00001";
 
 // Include and setup Display Module
 #include <TM1638lite.h>
@@ -15,10 +18,13 @@ String lastDisplayedMessage;
 
 void setup()
 {
-  Serial.begin(9600);
+  while(!Serial);
+    Serial.begin(9600);
+    radio.begin();
 
   bootUpLEDs();
   thisChannel = channelSelect();
+
   setupRadio();
 }
 
@@ -26,6 +32,9 @@ String receivedCommand;
 
 void loop(void)
 {
+
+  //radioSend("1;push");
+  //delay(100);
 
   radioListen();
   delay(100);

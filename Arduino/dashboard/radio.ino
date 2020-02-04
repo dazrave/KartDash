@@ -1,7 +1,7 @@
 // Radio functions
 void radioListen(){
 
-  Serial.println("radioListen()");
+  //Serial.println("Listening...");
   radio.startListening();
   char receivedMessage[32] = {0};
 
@@ -10,7 +10,7 @@ void radioListen(){
   if (radio.available()){
 
     blinkLED(1); // Blink LED-1 to show we've received a message
-    Serial.println("Blink LED 1");
+    //Serial.println("Blink LED 1");
     radio.read(receivedMessage, sizeof(receivedMessage));
     String stringMessage(receivedMessage);
     radio.stopListening();
@@ -31,24 +31,25 @@ boolean processMessage(String receivedMessage) {
     //const char acknowledgeMessage = receivedMessage;
     const char* acknowledgeMessage = receivedMessage.c_str();
     String destination = parseMessage(receivedMessage,';',0);
-    Serial.println(destination);
+    Serial.println("Received: "+receivedMessage);
+    Serial.println("Destination: "+destination);
     String channel = String(thisChannel);
 
     if (destination == "0" || destination == channel) {
+      Serial.println("Processing: Yes");
       // Send acknowledgement message back
       //const char text[] = {acknowledgeMessage};
 
       
 
       //const char text[] = thisChannel;
-      const char*text = receivedMessage.c_str()
-      ;
+      const char*text = receivedMessage.c_str();
 
       int i = 0;
       while(i <= 3){ // Send acknowledgement a few times just to be sure
         //radio.write(text, sizeof(text));
         radio.write(text, strlen(text));
-        Serial.println("Blink LED 2");
+        //Serial.println("Blink LED 2");
         blinkLED(2); // blink led 2 to show something was sent
         delay(50);
         i++;
@@ -56,15 +57,16 @@ boolean processMessage(String receivedMessage) {
 
       delay(100);
       return true;
+    } else {
+      Serial.println("Processing: No");
     }
-
+    Serial.println("-----------------");
     return false;
 }
 
 void radioSend(String message){
   const char*text = message.c_str();
   radio.write(text, sizeof(text));
-  Serial.println(message);
   blinkLED(2); // blink led 1 to show something was sent
   delay(100);
 }

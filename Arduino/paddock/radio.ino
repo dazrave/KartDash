@@ -1,7 +1,7 @@
 // Radio functions
 void radioListen(){
 
-  Serial.println("radioListen()");
+  ///Serial.println("radioListen()");
   radio.startListening();
   char receivedMessage[32] = {0};
 
@@ -10,16 +10,18 @@ void radioListen(){
   if (radio.available()){
 
     blinkLED(1); // Blink LED-1 to show we've received a message
-    Serial.println("Blink LED 1");
+    
     radio.read(receivedMessage, sizeof(receivedMessage));
     String stringMessage(receivedMessage);
     radio.stopListening();
-
-    boolean acceptCommand = processMessage(receivedMessage); // Check who the message is for
-
-    if (acceptCommand) {
-      //processCommand(receivedMessage);
+    if(receivedMessage){
+      boolean acceptCommand = processMessage(receivedMessage); // Check who the message is for
+      if (acceptCommand) {
+        //processCommand(receivedMessage);
+      }
     }
+
+    
     
     delay(100);
     return;
@@ -31,6 +33,9 @@ boolean processMessage(String receivedMessage) {
     //const char acknowledgeMessage = receivedMessage;
     const char* acknowledgeMessage = receivedMessage.c_str();
     String destination = parseMessage(receivedMessage,';',0);
+    Serial.println("Heard: "+receivedMessage);
+    Serial.println("Intended for: "+destination);
+    
     Serial.println(destination);
 
     if (destination.toInt() == 0 || destination.toInt() == thisChannel) {
@@ -45,7 +50,7 @@ boolean processMessage(String receivedMessage) {
       while(i <= 3){ // Send acknowledgement a few times just to be sure
         //radio.write(text, sizeof(text));
         radio.write(text, strlen(text));
-        Serial.println("Blink LED 2");
+        //Serial.println("Blink LED 2");
         blinkLED(2); // blink led 2 to show something was sent
         delay(50);
         i++;
@@ -57,12 +62,15 @@ boolean processMessage(String receivedMessage) {
 }
 
 void radioSend(String message){
+  radio.stopListening();
   const char*text = message.c_str();
-  radio.write(text, sizeof(text));
-  Serial.println(message);
-  blinkLED(5); // blink led 5 to show something was sent
-  delay(100);
-  blinkLED(5);
+  radio.write(&text, sizeof(text));
+  Serial.println("Sending: "+message);
+  delay(1000);
+  radio.startListening();
+  //blinkLED(5); // blink led 5 to show something was sent
+  //delay(100);
+  //blinkLED(5);
 }
 
 String parseMessage(String data, char separator, int index)

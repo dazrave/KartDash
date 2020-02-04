@@ -1,8 +1,9 @@
 // Setup Functions
 int channelSelect() { 
   thisChannel = 0;
+  Serial.println("Channel?");
+  tm.displayText("CHANNEL?");
   while(thisChannel == 0){
-    tm.displayText("CHANNEL?");
     buttons = tm.readButtons();
     for(int button = 1; button < 9; button++){
        buttons = tm.readButtons();
@@ -32,19 +33,30 @@ int channelSelect() {
   return thisChannel;
 }
 
-void setupRadio(){
-  Serial.println("Radio Setup");
+void setupRadio_OLD(){
+
+  Serial.println("Setting up Radio...");
   while(!Serial);
-  Serial.begin(9600);
-  radio.begin();
+    Serial.begin(9600);
+    radio.begin();
+
   radio.setPALevel(RF24_PA_MAX);
   radio.setChannel(0x76);
+  
   radio.openWritingPipe(0xF0F0F0F0E1LL);
   const uint64_t pipe = 0xE8E8F0F0E1LL;
   radio.openReadingPipe(1, pipe);
 
   radio.enableDynamicPayloads();
   radio.powerUp();
+
   sendToScreen("READY...", 2, false);
   delay(100);
+}
+
+void setupRadio(){
+  radio.setPALevel(RF24_PA_MAX);
+  //set the address
+  radio.openReadingPipe(0, address);
+  radio.startListening();
 }
