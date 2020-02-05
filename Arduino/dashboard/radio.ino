@@ -67,6 +67,7 @@ boolean processMessage(String receivedMessage) {
 void radioSend(String message){
   const char*text = message.c_str();
   radio.write(text, sizeof(text));
+  Serial.println("Sent: "+message);
   blinkLED(2); // blink led 1 to show something was sent
   delay(100);
 }

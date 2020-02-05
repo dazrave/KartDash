@@ -13,8 +13,15 @@ const byte address[6] = "00001";
 #include <TM1638lite.h>
 TM1638lite tm(2, 3, 4);
 byte buttons;
+
+// General setup
 int thisChannel = 0;
 String lastDisplayedMessage;
+String receivedCommand;
+
+// Heart beat setup
+int pulse = 900000; // 1 pulse every 15 minutes (set in ms)
+unsigned long heartBeatStart = millis(); // start heartbeat timer
 
 void setup()
 {
@@ -22,29 +29,29 @@ void setup()
     Serial.begin(9600);
     radio.begin();
 
-  bootUpLEDs();
-  thisChannel = channelSelect();
-
-  setupRadio();
+  bootUpLEDs(); // Show loading LEDs
+  thisChannel = channelSelect(); // Ask user to set channel
+  setupRadio(); // Setup the radio
 }
-
-String receivedCommand;
 
 void loop(void)
 {
 
-  //radioSend("1;push");
-  //delay(100);
-
-  radioListen();
-  delay(100);
-  buttonListen();
-  delay(100); // End of loop
+  radioListen();  // Get radio commands
+  delay(50);
+  buttonListen(); // Get button commands
+  delay(50);
+  heartBeat(); // Occasionally reply to show we're still working
+  
 }
 
+void heartBeat() {
 
-
-
-
-
+  unsigned long currentTime = millis(); // get current time
+  if (currentTime - heartBeatStart >= pulse) {
+    heartBeatStart = millis(); // restart heartbeat timer
+    radioSend("p;pulse;"+thisChannel); // Send a heartbeat
+  }
+  
+}
 

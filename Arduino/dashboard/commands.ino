@@ -6,26 +6,23 @@ void processCommand(String receivedString){
   String thisMessage;
   //int delay;
   
-  String receivedCommand = parseMessage(receivedString,';',1);
-  String receivedValue = parseMessage(receivedString,';',2);
-  //String receivedDelay = parseMessage(receivedString,';',3);
+  String receivedType = parseMessage(receivedString,';',1);
+  String receivedCommand = parseMessage(receivedString,';',2);
+  String receivedValue = parseMessage(receivedString,';',3);
+  String receivedDelay = parseMessage(receivedString,';',4);
 
-  if(receivedCommand == "box"){
-    sendToScreen("8OX  8OX", 15, true);
+  if(receivedType == "msg"){
+    //processMessage(receivedCommand);
   }
-  if(receivedCommand == "push"){
-    sendToScreen("  PUSH  ", 5, false);
+
+  if(receivedType == "rsvp"){
+    //processReply(receivedCommand);
   }
-  if(receivedCommand == "blue"){
-    sendToScreen("  8LUE  ", 5, false);
-  }
-  if(receivedCommand == "stint"){
-    // sendToScreen("  8LUE  ", 5, false)
-    //lastDisplayedMessage = thisMessage;
-  }
+
   if(receivedString == "pit"){
     pitRequester();
   }
+
   delay(100);
 }
 
@@ -67,9 +64,6 @@ void pitRequester(){
         waitForAccept = false;
         break;
       }
-
- 
-        
 
     }
     
